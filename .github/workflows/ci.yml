@@ -49,7 +49,7 @@ jobs:
           sudo mv migrate.linux-amd64 /usr/bin/migrate
           which migrate
 
-      - name: RRun migrations
+      - name: Run migrations
         run: make migrateup
 
       - name: Test
