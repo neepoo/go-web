@@ -34,7 +34,7 @@ func TestTransferTx(t *testing.T) {
 
 	// 检查结果
 	existed := make(map[int]bool)
-	for i := 0; i < 5; i++ {
+	for i := 0; i < n; i++ {
 		err := <-errs
 		require.NoError(t, err)
 
@@ -106,4 +106,51 @@ func TestTransferTx(t *testing.T) {
 	fmt.Println(">> after:", updateAccount1.Balance, updateAccount2.Balance)
 	require.Equal(t, account1.Balance-int64(n)*amount, updateAccount1.Balance)
 	require.Equal(t, account2.Balance+int64(n)*amount, updateAccount2.Balance)
+}
+
+
+func TestTransferTxDeadlock(t *testing.T) {
+	store := NewStore(testDb)
+	account1 := createRandomAccount(t)
+	account2 := createRandomAccount(t)
+
+	// 运行并发的转账事务
+	n := 10
+	amount := int64(10)
+
+	errs := make(chan error)
+	for i := 0; i < n; i++ {
+		fromAccountID := account1.ID
+		toAccountID := account2.ID
+
+		if i % 2 == 1{
+			fromAccountID = account2.ID
+			toAccountID = account1.ID
+		}
+
+		go func() {
+			ctx := context.Background()
+			_, err := store.TransferTx(ctx, TransferTxParams{
+				FromAccountId: fromAccountID,
+				ToAccountId:   toAccountID,
+				Amount:        amount,
+			})
+			errs <- err
+		}()
+	}
+
+	// 检查结果
+	for i := 0; i < n; i++ {
+		err := <-errs
+		require.NoError(t, err)
+	}
+
+	// 检查最终更新的余额
+	updateAccount1, err := testQueries.GetAccount(context.Background(), account1.ID)
+	require.NoError(t, err)
+
+	updateAccount2, err := testQueries.GetAccount(context.Background(), account2.ID)
+	require.NoError(t, err)
+	require.Equal(t, account1.Balance, updateAccount1.Balance)
+	require.Equal(t, account2.Balance, updateAccount2.Balance)
 }
