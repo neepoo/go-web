@@ -56,8 +56,6 @@ type TransferTxResult struct {
 	ToEntry     Entry    `json:"to_entry"`
 }
 
-
-
 // TransferTx 为一个账户执行多次转账
 // 创建转账记录,添加账户entries,更新账户的余额在一次数据库事务中
 func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error) {
@@ -70,45 +68,38 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (Trans
 			ToAccountID:   arg.ToAccountId,
 			Amount:        arg.Amount,
 		})
-		if err != nil{
+		if err != nil {
 			return err
 		}
 		result.FromEntry, err = q.CreateEntry(ctx, CreateEntryParams{
 			AccountID: arg.FromAccountId,
 			Amount:    -arg.Amount,
 		})
-		if err != nil{
+		if err != nil {
 			return err
 		}
 		result.ToEntry, err = q.CreateEntry(ctx, CreateEntryParams{
 			AccountID: arg.ToAccountId,
 			Amount:    arg.Amount,
 		})
-		if err != nil{
+		if err != nil {
 			return err
 		}
+
 		// 更新余额
-		// 下面的实现是错误的(GetAccount),需要增加行锁
-		account1, err := q.GetAccountForUpdate(ctx, arg.FromAccountId)
-		if err != nil{
-			return err
-		}
-		result.FromAccount, err = q.UpdateAccount(ctx, UpdateAccountParams{
-			ID:      arg.FromAccountId,
-			Balance: account1.Balance - arg.Amount,
+		result.FromAccount, err = q.AddAccountBalance(ctx, AddAccountBalanceParams{
+			ID:     arg.FromAccountId,
+			Amount: -arg.Amount,
 		})
-		if err != nil{
+		if err != nil {
 			return err
 		}
-		account2, err := q.GetAccountForUpdate(ctx, arg.ToAccountId)
-		if err != nil{
-			return err
-		}
-		result.ToAccount, err = q.UpdateAccount(ctx, UpdateAccountParams{
-			ID:      arg.ToAccountId,
-			Balance: account2.Balance + arg.Amount,
+
+		result.ToAccount, err = q.AddAccountBalance(ctx, AddAccountBalanceParams{
+			ID:     arg.ToAccountId,
+			Amount: arg.Amount,
 		})
-		if err != nil{
+		if err != nil {
 			return err
 		}
 
