@@ -7,21 +7,27 @@ import (
 )
 
 // Store 提供所有数据库的查询执行以及事务
-type Store struct {
+type Store interface {
+	Querier
+	TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error)
+}
+
+// SQLStore 提供所有数据库的查询执行以及事务
+type SQLStore struct {
 	*Queries // 提供了单个的查询
 	// 增加新功能以便支持事务
 	db *sql.DB
 }
 
-func NewStore(db *sql.DB) *Store {
-	return &Store{
+func NewStore(db *sql.DB) Store {
+	return &SQLStore{
 		Queries: New(db),
 		db:      db,
 	}
 }
 
 // execTx 执行数据库事务
-func (store *Store) execTx(ctx context.Context, fn func(queries *Queries) error) error {
+func (store *SQLStore) execTx(ctx context.Context, fn func(queries *Queries) error) error {
 	// 开始事务
 	tx, err := store.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -58,7 +64,7 @@ type TransferTxResult struct {
 
 // TransferTx 为一个账户执行多次转账
 // 创建转账记录,添加账户entries,更新账户的余额在一次数据库事务中
-func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error) {
+func (store *SQLStore) TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error) {
 	var result TransferTxResult
 
 	err := store.execTx(ctx, func(q *Queries) error {
@@ -97,7 +103,6 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (Trans
 
 	return result, err
 }
-
 
 func addMoney(
 	ctx context.Context,

@@ -11,13 +11,7 @@ import (
 	db "github.com/neepoo/go-web/db/sqlc"
 )
 
-const (
-	dbDriver      = "postgres"
-	dbSource      = "postgresql://root:secret@localhost:5432/simple_bank?sslmode=disable"
-	serverAddress = "0.0.0.0:8080"
-)
-
-func main() {
+ func main() {
 	config, err := util.LoadConfig(".")
 	if err != nil {
 		log.Fatal("load config error", err)
