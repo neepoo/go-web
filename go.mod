@@ -1,4 +1,4 @@
-module go-web
+module github.com/neepoo/go-web
 
 go 1.16
 

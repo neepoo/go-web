@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"go-web/util"
+	"github.com/neepoo/go-web/util"
 
 	"github.com/stretchr/testify/require"
 )

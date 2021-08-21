@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"go-web/util"
+	"github.com/neepoo/go-web/util"
 )
 
 func createRandomAccount(t *testing.T) Account {
