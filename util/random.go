@@ -34,6 +34,11 @@ func RandomOwner() string {
 	return RandomString(6)
 }
 
+// RandomEmail 随机生成email
+func RandomEmail() string {
+	return RandomOwner() + "@email.com"
+}
+
 // RandomMoney 随机生成金额
 func RandomMoney() int64 {
 	return RandomInt(0, 1000)
